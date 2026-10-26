@@ -26,7 +26,7 @@ describe('Bookings and availability', () => {
   it('quotes a valid booking', async () => {
     const quote = await ctx.availabilityService.getQuote(
       ctx.courtId,
-      ctx.at('09:00'),
+      ctx.at('10:00'),
       60,
     );
     expect(quote.available).toBe(true);
@@ -39,7 +39,7 @@ describe('Bookings and availability', () => {
       userId,
       input: {
         courtId: ctx.courtId,
-        startTime: ctx.at('09:00'),
+        startTime: ctx.at('10:00'),
         duration: 60,
       },
     });
@@ -51,12 +51,12 @@ describe('Bookings and availability', () => {
       ctx.courtId,
       ctx.dateStr,
     );
-    const nine = slots.find((slot) => slot.startTime === ctx.at('09:00'));
-    const nineThirty = slots.find((slot) => slot.startTime === ctx.at('09:30'));
     const ten = slots.find((slot) => slot.startTime === ctx.at('10:00'));
-    expect(nine?.available).toBe(false);
-    expect(nineThirty?.available).toBe(false);
-    expect(ten?.available).toBe(true);
+    const tenThirty = slots.find((slot) => slot.startTime === ctx.at('10:30'));
+    const eleven = slots.find((slot) => slot.startTime === ctx.at('11:00'));
+    expect(ten?.available).toBe(false);
+    expect(tenThirty?.available).toBe(false);
+    expect(eleven?.available).toBe(true);
   });
 
   it('allows an adjacent booking', async () => {
@@ -65,7 +65,7 @@ describe('Bookings and availability', () => {
       userId,
       input: {
         courtId: ctx.courtId,
-        startTime: ctx.at('10:00'),
+        startTime: ctx.at('11:00'),
         duration: 60,
       },
     });
@@ -79,7 +79,7 @@ describe('Bookings and availability', () => {
         userId,
         input: {
           courtId: ctx.courtId,
-          startTime: ctx.at('09:30'),
+          startTime: ctx.at('10:30'),
           duration: 60,
         },
       }),

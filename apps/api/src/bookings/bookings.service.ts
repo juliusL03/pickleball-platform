@@ -316,38 +316,73 @@ export class BookingsService {
     const session = await this.connection.startSession();
     try {
       let updated: BookingDocument | null = null;
-      await session.withTransaction(async () => {
-        const free = await this.availabilityService.isRangeFree(
-          change.courtId,
-          change.startTime,
-          endTime,
-          { excludeBookingId: bookingId, session },
-        );
-        if (!free) {
-          throw new ConflictException({
-            message: 'The requested new time is no longer available',
-            code: 'BOOKING_CONFLICT',
-          });
+      try {
+        await session.withTransaction(async () => {
+          const free = await this.availabilityService.isRangeFree(
+            change.courtId,
+            change.startTime,
+            endTime,
+            { excludeBookingId: bookingId, session },
+          );
+          if (!free) {
+            throw new ConflictException({
+              message: 'The requested new time is no longer available',
+              code: 'BOOKING_CONFLICT',
+            });
+          }
+          await this.bookingSlotModel
+            .deleteMany({ bookingId: booking._id }, { session })
+            .exec();
+          await this.bookingSlotModel.insertMany(
+            slotStarts.map((startAt) => ({
+              courtId: court._id,
+              startAt,
+              bookingId: booking._id,
+            })),
+            { session, ordered: true },
+          );
+          booking.courtId = court._id;
+          booking.venueId = court.venueId;
+          booking.startTime = change.startTime;
+          booking.endTime = endTime;
+          booking.duration = change.duration;
+          booking.pricing = pricing;
+          updated = await booking.save({ session });
+        });
+      } catch (error) {
+        if (this.isTransactionUnsupported(error)) {
+          const free = await this.availabilityService.isRangeFree(
+            change.courtId,
+            change.startTime,
+            endTime,
+            { excludeBookingId: bookingId },
+          );
+          if (!free) {
+            throw new ConflictException({
+              message: 'The requested new time is no longer available',
+              code: 'BOOKING_CONFLICT',
+            });
+          }
+          await this.bookingSlotModel.deleteMany({ bookingId: booking._id }).exec();
+          await this.bookingSlotModel.insertMany(
+            slotStarts.map((startAt) => ({
+              courtId: court._id,
+              startAt,
+              bookingId: booking._id,
+            })),
+            { ordered: true },
+          );
+          booking.courtId = court._id;
+          booking.venueId = court.venueId;
+          booking.startTime = change.startTime;
+          booking.endTime = endTime;
+          booking.duration = change.duration;
+          booking.pricing = pricing;
+          updated = await booking.save();
+        } else {
+          throw error;
         }
-        await this.bookingSlotModel
-          .deleteMany({ bookingId: booking._id }, { session })
-          .exec();
-        await this.bookingSlotModel.insertMany(
-          slotStarts.map((startAt) => ({
-            courtId: court._id,
-            startAt,
-            bookingId: booking._id,
-          })),
-          { session, ordered: true },
-        );
-        booking.courtId = court._id;
-        booking.venueId = court.venueId;
-        booking.startTime = change.startTime;
-        booking.endTime = endTime;
-        booking.duration = change.duration;
-        booking.pricing = pricing;
-        updated = await booking.save({ session });
-      });
+      }
       if (!updated) throw new ConflictException('Unable to apply booking change');
       return updated;
     } catch (error) {
