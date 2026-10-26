@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ScheduleModule } from '@nestjs/schedule';
-import { YogaDriver, YogaDriverConfig } from '@graphql-yoga/nestjs';
+import { YogaDriverConfig } from '@graphql-yoga/nestjs';
 import configuration from './config/configuration';
 import paymentsConfig from './config/payments.config';
+import { graphqlConfig } from './config/graphql.config';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -24,11 +25,7 @@ import { PaymentsModule } from './payments/payments.module';
     }),
     ScheduleModule.forRoot(),
     DatabaseModule,
-    GraphQLModule.forRoot<YogaDriverConfig>({
-      driver: YogaDriver,
-      graphiql: true,
-      context: ({ req }) => ({ req }),
-    }),
+    GraphQLModule.forRoot<YogaDriverConfig>(graphqlConfig),
     UsersModule,
     AuthModule,
     HealthModule,

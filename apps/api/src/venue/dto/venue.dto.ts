@@ -1,4 +1,5 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { IsOptional, IsString } from 'class-validator';
 
 @ObjectType()
 export class AddressType {
@@ -41,7 +42,12 @@ export class VenueType {
 @InputType()
 export class UpdateVenueInput {
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   name?: string;
+
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   description?: string;
 }

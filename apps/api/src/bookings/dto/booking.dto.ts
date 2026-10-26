@@ -1,5 +1,15 @@
 import { Field, Float, ID, InputType, Int, ObjectType } from '@nestjs/graphql';
-import { IsISO8601, IsInt, IsNotEmpty, IsString, Max, Min, MinLength } from 'class-validator';
+import {
+  IsISO8601,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 @ObjectType()
 export class BookingPricingType {
@@ -130,6 +140,8 @@ export class CreateBookingHoldInput {
 @InputType()
 export class CreateBlockedSlotInput {
   @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsString()
   courtId?: string;
 
   @Field()
@@ -147,6 +159,7 @@ export class CreateBlockedSlotInput {
 
   @Field()
   @IsString()
+  @IsIn(['holiday', 'maintenance', 'private_event', 'other'])
   type!: string;
 }
 
