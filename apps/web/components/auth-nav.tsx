@@ -3,18 +3,29 @@
 import Link from 'next/link';
 import { useAuth } from './auth-provider';
 
+const linkClass =
+  'transition-colors hover:text-chalk focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ball focus-visible:ring-offset-2 focus-visible:ring-offset-ink';
+
 export function AuthNav() {
   const { user, loading, logout } = useAuth();
 
   if (loading) {
-    return <span className="text-sm text-gray-400">Loading…</span>;
+    return (
+      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+        Loading…
+      </span>
+    );
   }
 
   if (!user) {
     return (
       <div className="flex items-center gap-4">
-        <Link href="/login">Login</Link>
-        <Link href="/register">Register</Link>
+        <Link href="/login" className={linkClass}>
+          Login
+        </Link>
+        <Link href="/register" className={linkClass}>
+          Register
+        </Link>
       </div>
     );
   }
@@ -23,13 +34,21 @@ export function AuthNav() {
 
   return (
     <div className="flex items-center gap-4">
-      <Link href="/bookings">My bookings</Link>
-      {isStaff ? <Link href="/dashboard/bookings">Dashboard</Link> : null}
-      <span className="text-sm text-gray-600">{user.firstName}</span>
+      <Link href="/bookings" className={linkClass}>
+        My bookings
+      </Link>
+      {isStaff ? (
+        <Link href="/dashboard/bookings" className={`hidden sm:inline ${linkClass}`}>
+          Dashboard
+        </Link>
+      ) : null}
+      <span className="hidden text-[13px] text-muted sm:inline">
+        {user.firstName}
+      </span>
       <button
         type="button"
         onClick={logout}
-        className="text-sm text-gray-600 underline"
+        className={`underline underline-offset-4 ${linkClass}`}
       >
         Logout
       </button>

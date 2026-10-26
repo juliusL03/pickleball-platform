@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import type { Booking, ChangeRequest } from '@juls/pickleball-kit/types';
+import type { Booking, ChangeRequest, Court } from '@juls/pickleball-kit/types';
 import {
   BOOKING_QUERY,
   CANCEL_HOLD_MUTATION,
@@ -11,35 +11,53 @@ import {
   REQUEST_BOOKING_CANCELLATION_MUTATION,
   REQUEST_BOOKING_CHANGE_MUTATION,
 } from '@juls/pickleball-kit/graphql';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Container,
-  Input,
-  Label,
-  Stack,
-  Textarea,
-} from '@juls/pickleball-kit/ui';
+import { Button, buttonVariants, Container, Input, Label, Textarea } from '@juls/pickleball-kit/ui';
+import { cn } from '@juls/pickleball-kit/utils';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/components/auth-provider';
-import { formatCurrency, formatDateTime } from '@/lib/format';
+import { formatCurrency, formatLongDate, formatTime24 } from '@/lib/format';
+import {
+  BackLink,
+  courtName,
+  dangerAction,
+  display,
+  ErrorPanel,
+  eyebrow,
+  field,
+  fieldLabel,
+  formatCountdown,
+  isHoldExpired,
+  loadCourtIndex,
+  metaLabel,
+  needsPayment,
+  primaryAction,
+  secondaryAction,
+  SignedOutPanel,
+  SlotStrip,
+  StatusChip,
+  textField,
+  useNow,
+} from '../_ui';
 
 const ACTIVE_STATUSES = ['hold', 'pending_payment', 'confirmed'];
 
+const REQUEST_TONE: Record<string, string> = {
+  pending: 'border-line text-muted',
+  approved: 'border-ball/40 bg-ball/10 text-ball',
+  rejected: 'border-clay/40 bg-clay/10 text-alert',
+};
+
 export default function BookingDetailPage() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [requests, setRequests] = useState<ChangeRequest[]>([]);
+  const [courts, setCourts] = useState<Map<string, Court>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const [cancelReason, setCancelReason] = useState('');
   const [changeReason, setChangeReason] = useState('');
@@ -47,18 +65,22 @@ export default function BookingDetailPage() {
   const [newTime, setNewTime] = useState('');
   const [newDuration, setNewDuration] = useState('');
 
+  const now = useNow(booking?.status === 'hold' ? 1000 : 60000);
+
   const load = useCallback(async () => {
     if (!params?.id) return;
     try {
-      const [bookingData, requestData] = await Promise.all([
+      const [bookingData, requestData, courtIndex] = await Promise.all([
         api.request<{ booking: Booking | null }>(BOOKING_QUERY, {
           id: params.id,
         }),
         api.request<{ myChangeRequests: ChangeRequest[] }>(
           MY_CHANGE_REQUESTS_QUERY,
         ),
+        loadCourtIndex(),
       ]);
       setBooking(bookingData.booking);
+      setCourts(courtIndex);
       setRequests(
         requestData.myChangeRequests.filter(
           (request) => request.bookingId === params.id,
@@ -74,7 +96,7 @@ export default function BookingDetailPage() {
   useEffect(() => {
     if (user) void load();
     else setLoading(authLoading);
-  }, [user, authLoading, load]);
+  }, [user, authLoading, load, reloadKey]);
 
   async function handleCancelHold() {
     if (!booking) return;
@@ -147,171 +169,257 @@ export default function BookingDetailPage() {
 
   if (authLoading) {
     return (
-      <Container>
-        <p className="py-8">Loading…</p>
+      <Container size="xl">
+        <div className="py-16">
+          <p className={eyebrow}>Loading</p>
+        </div>
       </Container>
     );
   }
 
   if (!user) {
     return (
-      <Container>
-        <div className="py-12">
-          <p className="mb-4">Sign in to view this booking.</p>
-          <Button onClick={() => router.push('/login')}>Sign in</Button>
-        </div>
-      </Container>
+      <SignedOutPanel message="Sign in to see this booking, pay for it, or request a change." />
     );
   }
 
   if (loading) {
     return (
-      <Container>
-        <p className="py-8">Loading booking…</p>
+      <Container size="xl">
+        <div className="py-16">
+          <p className={eyebrow}>Loading session</p>
+        </div>
       </Container>
     );
   }
 
   if (!booking) {
     return (
-      <Container>
+      <Container size="xl">
         <div className="py-12">
-          <p className="mb-4">{error ?? 'Booking not found.'}</p>
-          <Link href="/bookings" className="underline">
-            Back to bookings
-          </Link>
+          <div className="max-w-md">
+            <ErrorPanel
+              message={error ?? 'Booking not found.'}
+              onRetry={() => setReloadKey((key) => key + 1)}
+            />
+            <div className="mt-6">
+              <BackLink href="/bookings">All bookings</BackLink>
+            </div>
+          </div>
         </div>
       </Container>
     );
   }
 
+  const court = courts.get(booking.courtId);
   const isActive = ACTIVE_STATUSES.includes(booking.status);
   const hasPendingRequest = requests.some(
     (request) => request.status === 'pending',
   );
+  const expired = isHoldExpired(booking, now);
+  const pay = needsPayment(booking, now);
 
   return (
-    <Container>
-      <div className="py-8">
-        <Link href="/bookings" className="text-sm text-gray-600 underline">
-          ← Back to bookings
-        </Link>
-        <div className="mt-4 grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-4">
-                <CardTitle>{booking.bookingNumber}</CardTitle>
-                <Badge>{booking.status}</Badge>
+    <Container size="xl">
+      <div className="py-8 lg:py-12">
+        <BackLink href="/bookings">All bookings</BackLink>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+          <div className="flex flex-col gap-6">
+            <article className="rise border border-line bg-surface">
+              <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-3">
+                <p className={cn(metaLabel, 'text-chalk')}>Session pass</p>
+                <StatusChip status={booking.status} expired={expired} />
               </div>
-            </CardHeader>
-            <CardContent>
-              <Stack gap={2}>
-                <p className="text-sm">
-                  <span className="text-gray-500">When: </span>
-                  {formatDateTime(booking.startTime)}
+
+              <div className="p-5 sm:p-6">
+                <h1 className={cn(display, 'text-3xl leading-none text-chalk sm:text-4xl')}>
+                  {courtName(court)}
+                </h1>
+                <p className="mt-3 text-sm text-muted">
+                  {formatLongDate(booking.startTime)}
                 </p>
-                <p className="text-sm">
-                  <span className="text-gray-500">Duration: </span>
-                  {booking.duration} minutes
-                </p>
-                <p className="text-sm">
-                  <span className="text-gray-500">Total: </span>
-                  {formatCurrency(
-                    booking.pricing.total,
-                    booking.pricing.currency,
+
+                <div className="mt-6 flex items-end gap-3">
+                  <p className="font-mono text-4xl leading-none text-chalk sm:text-5xl">
+                    {formatTime24(booking.startTime)}
+                  </p>
+                  <p className={cn(metaLabel, 'pb-1')}>
+                    to {formatTime24(booking.endTime)}
+                  </p>
+                </div>
+
+                <SlotStrip
+                  className="mt-5"
+                  startTime={booking.startTime}
+                  duration={booking.duration}
+                />
+
+                <dl className="mt-6 divide-y divide-line border-t border-line">
+                  <div className="flex items-baseline justify-between gap-6 py-3">
+                    <dt className={metaLabel}>Reference</dt>
+                    <dd className="font-mono text-sm text-chalk">
+                      {booking.bookingNumber}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-6 py-3">
+                    <dt className={metaLabel}>Duration</dt>
+                    <dd className="font-mono text-sm text-chalk">
+                      {booking.duration} min
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-6 py-3">
+                    <dt className={metaLabel}>Total</dt>
+                    <dd className="font-mono text-sm text-chalk">
+                      {formatCurrency(
+                        booking.pricing.total,
+                        booking.pricing.currency,
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              {booking.status === 'hold' && booking.holdExpiresAt ? (
+                <p
+                  className={cn(
+                    'border-t border-line px-5 py-3 font-mono text-[10px] uppercase tracking-[0.18em]',
+                    expired ? 'text-alert' : 'text-ball',
                   )}
+                >
+                  {expired
+                    ? 'Hold expired — this slot was released'
+                    : `Held · ${formatCountdown(
+                        new Date(booking.holdExpiresAt).getTime() - now,
+                      )} left to pay`}
                 </p>
-                {booking.holdExpiresAt && booking.status === 'hold' ? (
-                  <p className="text-sm text-gray-600">
-                    Hold expires {formatDateTime(booking.holdExpiresAt)}
-                  </p>
-                ) : null}
-                {booking.cancellationReason ? (
-                  <p className="text-sm text-gray-600">
-                    Reason: {booking.cancellationReason}
-                  </p>
+              ) : null}
+
+              {booking.cancellationReason ? (
+                <p className="border-t border-line px-5 py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+                  Reason · {booking.cancellationReason}
+                </p>
+              ) : null}
+            </article>
+
+            {pay || booking.status === 'hold' ? (
+              <div className="flex flex-wrap gap-3">
+                {pay ? (
+                  <Link
+                    href={`/bookings/${booking.id}/pay`}
+                    className={cn(
+                      buttonVariants({ size: 'lg' }),
+                      primaryAction,
+                      'px-6',
+                    )}
+                  >
+                    Pay{' '}
+                    {formatCurrency(
+                      booking.pricing.total,
+                      booking.pricing.currency,
+                    )}
+                  </Link>
                 ) : null}
                 {booking.status === 'hold' ? (
                   <Button
                     variant="destructive"
                     onClick={handleCancelHold}
                     disabled={busy}
-                    className="mt-2 self-start"
+                    className={dangerAction}
                   >
                     Cancel hold
                   </Button>
                 ) : null}
-              </Stack>
-            </CardContent>
-          </Card>
+              </div>
+            ) : null}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Requests</CardTitle>
-            </CardHeader>
-            <CardContent>
+            {message ? (
+              <p className="border border-line border-l-2 border-l-ball bg-surface px-4 py-3 text-sm text-chalk">
+                {message}
+              </p>
+            ) : null}
+
+            {error ? <ErrorPanel message={error} /> : null}
+          </div>
+
+          <aside className="flex flex-col gap-6">
+            <section className="border border-line bg-surface">
+              <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-3">
+                <p className={metaLabel}>Requests</p>
+                <span className={metaLabel}>{requests.length}</span>
+              </div>
+
               {requests.length === 0 ? (
-                <p className="text-sm text-gray-500">No requests yet.</p>
+                <p className="px-5 py-6 text-sm leading-relaxed text-muted">
+                  No requests yet. If your plans move, ask for a change below.
+                </p>
               ) : (
-                <Stack gap={3}>
+                <div className="divide-y divide-line">
                   {requests.map((request) => (
-                    <div key={request.id} className="rounded-md border p-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium capitalize">
+                    <div key={request.id} className="px-5 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm capitalize text-chalk">
                           {request.type} request
                         </p>
-                        <Badge variant="secondary">{request.status}</Badge>
+                        <span
+                          className={cn(
+                            'inline-flex shrink-0 items-center border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em]',
+                            REQUEST_TONE[request.status] ?? 'border-line text-muted',
+                          )}
+                        >
+                          {request.status}
+                        </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-600">
+                      <p className="mt-2 text-sm leading-relaxed text-muted">
                         {request.reason}
                       </p>
                       {request.staffResponse ? (
-                        <p className="mt-1 text-sm text-gray-500">
-                          Staff: {request.staffResponse}
+                        <p className={cn(metaLabel, 'mt-3')}>
+                          Staff · {request.staffResponse}
                         </p>
                       ) : null}
                     </div>
                   ))}
-                </Stack>
+                </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </section>
 
-        {isActive && !hasPendingRequest ? (
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Request a change</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleRequestChange}>
-                  <Stack gap={3}>
-                    <div className="grid gap-3 sm:grid-cols-2">
+            {isActive && !hasPendingRequest ? (
+              <>
+                <section className="border border-line bg-surface">
+                  <div className="border-b border-line px-5 py-3">
+                    <p className={metaLabel}>Request a change</p>
+                  </div>
+                  <form onSubmit={handleRequestChange} className="space-y-4 p-5">
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <Label htmlFor="new-date">New date (optional)</Label>
+                        <Label htmlFor="new-date" className={fieldLabel}>
+                          New date
+                        </Label>
                         <Input
                           id="new-date"
                           type="date"
                           value={newDate}
                           onChange={(event) => setNewDate(event.target.value)}
-                          className="mt-1"
+                          className={field}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="new-time">New time (optional)</Label>
+                        <Label htmlFor="new-time" className={fieldLabel}>
+                          New time
+                        </Label>
                         <Input
                           id="new-time"
                           type="time"
                           value={newTime}
                           onChange={(event) => setNewTime(event.target.value)}
-                          className="mt-1"
+                          className={field}
                         />
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="new-duration">
-                        New duration (optional)
+                      <Label htmlFor="new-duration" className={fieldLabel}>
+                        New duration
                       </Label>
                       <Input
                         id="new-duration"
@@ -320,63 +428,70 @@ export default function BookingDetailPage() {
                         step={30}
                         value={newDuration}
                         onChange={(event) => setNewDuration(event.target.value)}
-                        className="mt-1"
+                        className={field}
                       />
+                      <p className={cn(metaLabel, 'mt-2')}>
+                        Optional · leave blank to keep {booking.duration} min
+                      </p>
                     </div>
                     <div>
-                      <Label htmlFor="change-reason">Reason</Label>
+                      <Label htmlFor="change-reason" className={fieldLabel}>
+                        Reason
+                      </Label>
                       <Textarea
                         id="change-reason"
                         value={changeReason}
                         onChange={(event) => setChangeReason(event.target.value)}
                         minLength={5}
                         required
-                        className="mt-1"
+                        className={textField}
                       />
                     </div>
-                    <Button type="submit" disabled={busy} className="self-start">
+                    <Button
+                      type="submit"
+                      disabled={busy}
+                      className={cn(secondaryAction, 'w-full')}
+                    >
                       Submit change request
                     </Button>
-                  </Stack>
-                </form>
-              </CardContent>
-            </Card>
+                  </form>
+                </section>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Request cancellation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleRequestCancellation}>
-                  <Stack gap={3}>
+                <section className="border border-line border-l-2 border-l-clay bg-surface">
+                  <div className="border-b border-line px-5 py-3">
+                    <p className={metaLabel}>Cancel this session</p>
+                  </div>
+                  <form
+                    onSubmit={handleRequestCancellation}
+                    className="space-y-4 p-5"
+                  >
                     <div>
-                      <Label htmlFor="cancel-reason">Reason</Label>
+                      <Label htmlFor="cancel-reason" className={fieldLabel}>
+                        Reason
+                      </Label>
                       <Textarea
                         id="cancel-reason"
                         value={cancelReason}
                         onChange={(event) => setCancelReason(event.target.value)}
                         minLength={5}
                         required
-                        className="mt-1"
+                        className={textField}
                       />
                     </div>
                     <Button
                       type="submit"
                       variant="destructive"
                       disabled={busy}
-                      className="self-start"
+                      className={cn(dangerAction, 'w-full')}
                     >
                       Submit cancellation request
                     </Button>
-                  </Stack>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        ) : null}
-
-        {message ? <p className="mt-4 text-sm text-primary-700">{message}</p> : null}
-        {error ? <p className="mt-4 text-sm text-error">{error}</p> : null}
+                  </form>
+                </section>
+              </>
+            ) : null}
+          </aside>
+        </div>
       </div>
     </Container>
   );

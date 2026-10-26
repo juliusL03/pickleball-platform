@@ -1,12 +1,6 @@
-import { Container } from '@juls/pickleball-kit/ui';
+import Link from 'next/link';
+import { ContactPage } from '@juls/pickleball-kit/templates';
 
-export default function ContactPage() {
-  return (
-    <Container>
-      <section className="py-8">
-        <h1 className="text-3xl font-bold mb-4">Contact</h1>
-        <p>Get in touch with us for bookings and inquiries.</p>
-      </section>
-    </Container>
-  );
+export default function Page() {
+  return <ContactPage LinkComponent={Link} />;
 }

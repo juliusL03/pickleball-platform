@@ -32,7 +32,8 @@ export class GraphQLClient {
   constructor(options: GraphQLClientOptions) {
     this.url = options.url;
     this.getToken = options.getToken;
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    const fetchImpl = options.fetchImpl ?? fetch;
+    this.fetchImpl = (input, init) => fetchImpl(input, init);
   }
 
   async request<TData, TVariables extends Record<string, unknown> = Record<string, unknown>>(

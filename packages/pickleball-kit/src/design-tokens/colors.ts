@@ -1,4 +1,15 @@
 export const colors = {
+  ink: '#0a0e0c',
+  surface: '#111a15',
+  'surface-raised': '#18241d',
+  chalk: '#edefe6',
+  muted: '#9aa79e',
+  court: '#14513c',
+  'court-deep': '#0d392b',
+  clay: '#c4683f',
+  ball: '#e9ff57',
+  line: 'rgb(237 239 230 / 0.12)',
+  alert: '#ff9c86',
   primary: {
     50: '#f0fdf4',
     100: '#dcfce7',

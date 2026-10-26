@@ -1,6 +1,24 @@
 @import "tailwindcss";
 
-@theme inline {
+@source "../../../packages/pickleball-kit/src";
+
+@theme {
+  --font-sans: var(--font-instrument), Inter, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-archivo), Inter, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
+
+  --color-ink: #0a0e0c;
+  --color-surface: #111a15;
+  --color-surface-raised: #18241d;
+  --color-chalk: #edefe6;
+  --color-muted: #9aa79e;
+  --color-court: #14513c;
+  --color-court-deep: #0d392b;
+  --color-clay: #c4683f;
+  --color-ball: #e9ff57;
+  --color-alert: #ff9c86;
+  --color-line: rgb(237 239 230 / 0.12);
+
   --color-primary-50: rgb(240 253 244);
   --color-primary-100: rgb(220 252 231);
   --color-primary-200: rgb(187 247 208);
@@ -27,4 +45,34 @@
   --color-warning: rgb(245 158 11);
   --color-error: rgb(239 68 68);
   --color-info: rgb(59 130 246);
+
+  --shadow-floodlight: 0 0 0 1px rgb(237 239 230 / 0.06), 0 40px 80px -40px rgb(0 0 0 / 0.9);
+}
+
+@layer base {
+  ::selection {
+    background-color: var(--color-ball);
+    color: var(--color-ink);
+  }
+}
+
+@keyframes court-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: court-rise 600ms cubic-bezier(0.22, 0.68, 0.24, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
 }

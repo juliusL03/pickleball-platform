@@ -3,21 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Container,
-  Input,
-  Label,
-  Stack,
-} from '@juls/pickleball-kit/ui';
+import { LoginPage } from '@juls/pickleball-kit/templates';
 import { useAuth } from '@/components/auth-provider';
 import { errorMessage } from '@/lib/api';
 
-export default function LoginPage() {
+export default function LoginPageWrapper() {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -40,49 +30,15 @@ export default function LoginPage() {
   }
 
   return (
-    <Container size="sm">
-      <section className="py-12">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit}>
-              <Stack gap={4}>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                {error ? <p className="text-sm text-error">{error}</p> : null}
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Signing in…' : 'Sign in'}
-                </Button>
-                <p className="text-sm text-gray-600">
-                  No account? <Link href="/register">Create one</Link>
-                </p>
-              </Stack>
-            </form>
-          </CardContent>
-        </Card>
-      </section>
-    </Container>
+    <LoginPage
+      email={email}
+      password={password}
+      error={error}
+      submitting={submitting}
+      onEmailChange={setEmail}
+      onPasswordChange={setPassword}
+      onSubmit={handleSubmit}
+      LinkComponent={Link}
+    />
   );
 }

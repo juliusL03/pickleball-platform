@@ -1,4 +1,17 @@
 :root {
+  /* Night court surfaces */
+  --color-ink: 10 14 12;
+  --color-surface: 17 26 21;
+  --color-surface-raised: 24 36 29;
+  --color-chalk: 237 239 230;
+  --color-muted: 154 167 158;
+  --color-court: 20 81 60;
+  --color-court-deep: 13 57 43;
+  --color-clay: 196 104 63;
+  --color-ball: 233 255 87;
+  --color-alert: 255 156 134;
+  --color-line: 237 239 230 / 0.12;
+
   /* Primary */
   --color-primary-50: 240 253 244;
   --color-primary-100: 220 252 231;
@@ -31,9 +44,21 @@
   --color-error: 239 68 68;
   --color-info: 59 130 246;
 
+  /* Typography */
+  --font-sans: var(--font-instrument), Inter, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-archivo), Inter, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), JetBrains Mono, ui-monospace, monospace;
+
   /* Radius */
   --radius-sm: 0.125rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
+
+  /* Shadow */
+  --shadow-floodlight: 0 0 0 1px rgb(237 239 230 / 0.06), 0 40px 80px -40px rgb(0 0 0 / 0.9);
+
+  /* Motion */
+  --duration-court: 600ms;
+  --ease-court: cubic-bezier(0.22, 0.68, 0.24, 1);
 }

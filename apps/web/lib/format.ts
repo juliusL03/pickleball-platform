@@ -23,6 +23,50 @@ export function formatDateTime(iso: string): string {
   return `${formatDate(iso)} · ${formatTime(iso)}`;
 }
 
+export function formatTime24(iso: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: VENUE_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(new Date(iso));
+}
+
+export function formatTimeRange(start: string, end: string): string {
+  return `${formatTime24(start)}–${formatTime24(end)}`;
+}
+
+export function formatLongDate(iso: string): string {
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: VENUE_TIMEZONE,
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date(iso));
+}
+
+export function formatMonthLabel(iso: string): string {
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: VENUE_TIMEZONE,
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(iso));
+}
+
+export function formatDayParts(iso: string): { day: string; weekday: string } {
+  const date = new Date(iso);
+  return {
+    day: new Intl.DateTimeFormat('en-PH', {
+      timeZone: VENUE_TIMEZONE,
+      day: '2-digit',
+    }).format(date),
+    weekday: new Intl.DateTimeFormat('en-PH', {
+      timeZone: VENUE_TIMEZONE,
+      weekday: 'short',
+    }).format(date),
+  };
+}
+
 export function formatCurrency(amount: number, currency = 'PHP'): string {
   return new Intl.NumberFormat('en-PH', {
     style: 'currency',

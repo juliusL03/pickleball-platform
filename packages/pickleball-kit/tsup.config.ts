@@ -8,7 +8,8 @@ export default defineConfig({
     'graphql/index': 'src/graphql/index.ts',
     'types/index': 'src/types/index.ts',
     'schemas/index': 'src/schemas/index.ts',
-    'utils/index': 'src/utils/index.ts'
+    'utils/index': 'src/utils/index.ts',
+    'templates/index': 'src/templates/index.ts'
   },
   format: ['esm'],
   dts: true,

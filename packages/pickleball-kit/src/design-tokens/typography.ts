@@ -1,7 +1,8 @@
 export const typography = {
   fontFamily: {
-    sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-    mono: ['JetBrains Mono', 'monospace'],
+    sans: ['var(--font-instrument)', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+    display: ['var(--font-archivo)', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+    mono: ['var(--font-jetbrains)', 'JetBrains Mono', 'ui-monospace', 'monospace'],
   },
   fontSize: {
     xs: ['0.75rem', { lineHeight: '1rem' }],
@@ -18,6 +19,7 @@ export const typography = {
     medium: '500',
     semibold: '600',
     bold: '700',
+    extrabold: '800',
   },
 } as const;
 
