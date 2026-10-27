@@ -280,7 +280,44 @@ export class PaymentsService {
   async payments(status?: string, limit = 50) {
     const query: any = {};
     if (status) query.status = status;
-    return this.paymentModel.find(query).sort({ createdAt: -1 }).limit(limit).exec();
+    return this.paymentModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(Math.min(limit, 100))
+      .exec();
+  }
+
+  async paymentsPaginated(
+    filter: {
+      status?: string;
+      method?: string;
+      from?: string;
+      to?: string;
+      search?: string;
+    } = {},
+    limit = 50,
+    offset = 0,
+  ): Promise<{ items: PaymentDocument[]; total: number }> {
+    const query: any = {};
+    if (filter.status) query.status = filter.status;
+    if (filter.method) query.method = filter.method;
+    if (filter.from || filter.to) {
+      query.createdAt = {};
+      if (filter.from) query.createdAt.$gte = new Date(filter.from);
+      if (filter.to) query.createdAt.$lte = new Date(filter.to);
+    }
+    const safeLimit = Math.min(limit || 50, 100);
+    const safeOffset = offset || 0;
+    const [items, total] = await Promise.all([
+      this.paymentModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(safeOffset)
+        .limit(safeLimit)
+        .exec(),
+      this.paymentModel.countDocuments(query).exec(),
+    ]);
+    return { items, total };
   }
 
   async payment(id: string) {

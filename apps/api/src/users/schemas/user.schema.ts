@@ -23,6 +23,9 @@ export class User {
   @Prop({ type: String, enum: ['customer', 'staff', 'owner'], default: 'customer' })
   role!: 'customer' | 'staff' | 'owner';
 
+  @Prop({ type: [String], default: [] })
+  permissions!: string[];
+
   @Prop({ type: String, enum: ['active', 'inactive', 'suspended'], default: 'active' })
   status!: 'active' | 'inactive' | 'suspended';
 
@@ -31,6 +34,9 @@ export class User {
 
   @Prop()
   lastLoginAt?: Date;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

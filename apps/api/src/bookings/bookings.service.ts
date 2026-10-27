@@ -246,6 +246,72 @@ export class BookingsService {
       .exec();
   }
 
+  async getAllBookingsPaginated(
+    filter: {
+      status?: string;
+      courtId?: string;
+      from?: string;
+      to?: string;
+      search?: string;
+    } = {},
+    limit = 50,
+    offset = 0,
+  ): Promise<{ items: BookingDocument[]; total: number }> {
+    const query: any = {};
+    if (filter.status) query.status = filter.status;
+    if (filter.courtId) query.courtId = new Types.ObjectId(filter.courtId);
+    if (filter.from || filter.to) {
+      query.startTime = {};
+      if (filter.from) query.startTime.$gte = new Date(filter.from);
+      if (filter.to) query.startTime.$lte = new Date(filter.to);
+    }
+    if (filter.search) {
+      const search = filter.search.trim();
+      if (search) {
+        query.$or = [
+          { bookingNumber: { $regex: search, $options: 'i' } },
+        ];
+      }
+    }
+    const safeLimit = Math.min(limit || 50, 100);
+    const safeOffset = offset || 0;
+    const [items, total] = await Promise.all([
+      this.bookingModel
+        .find(query)
+        .sort({ startTime: -1 })
+        .skip(safeOffset)
+        .limit(safeLimit)
+        .exec(),
+      this.bookingModel.countDocuments(query).exec(),
+    ]);
+    return { items, total };
+  }
+
+  async updateBookingStatus(
+    bookingId: string,
+    status: string,
+    reason?: string,
+  ): Promise<BookingDocument> {
+    const booking = await this.findBookingOrThrow(bookingId);
+    assertTransition(booking.status, status as BookingStatus);
+    (booking as any).status = status;
+    if (status === 'cancelled') {
+      booking.cancelledAt = new Date();
+      booking.cancellationReason = reason || 'cancelled_by_staff';
+      await this.bookingSlotModel.deleteMany({ bookingId: booking._id }).exec();
+    }
+    if (status === 'confirmed') {
+      booking.confirmedAt = new Date();
+    }
+    if (status === 'completed') {
+      (booking as any).completedAt = new Date();
+    }
+    if (status === 'no_show') {
+      (booking as any).noShowAt = new Date();
+    }
+    return booking.save();
+  }
+
   async expireStaleHolds(): Promise<number> {
     const now = new Date();
     const stale = await this.bookingModel

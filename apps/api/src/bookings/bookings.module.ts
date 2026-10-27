@@ -21,6 +21,7 @@ import {
   ChangeRequest,
   ChangeRequestSchema,
 } from './schemas/change-request.schema';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import {
     ]),
     CourtsModule,
     VenueModule,
+    AuditModule,
   ],
   providers: [
     AvailabilityService,

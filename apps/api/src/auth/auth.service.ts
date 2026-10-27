@@ -40,6 +40,9 @@ export class AuthService {
         phone: user.phone,
         role: user.role,
         status: user.status,
+        permissions: Array.isArray((user as any).permissions)
+          ? (user as any).permissions
+          : [],
       },
     };
   }
@@ -72,6 +75,9 @@ export class AuthService {
         phone: user.phone,
         role: user.role,
         status: user.status,
+        permissions: Array.isArray((user as any).permissions)
+          ? (user as any).permissions
+          : [],
       },
     };
   }

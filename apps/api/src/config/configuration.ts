@@ -1,3 +1,17 @@
+function parseCorsOrigins(origin?: string): string | string[] {
+  if (!origin) {
+    return ['http://localhost:3000', 'http://localhost:3002'];
+  }
+  const origins = origin
+    .split(',')
+    .map((o) => o.trim())
+    .filter((o) => o.length > 0);
+  if (origins.length === 0) {
+    return ['http://localhost:3000', 'http://localhost:3002'];
+  }
+  return origins;
+}
+
 export default () => ({
   port: parseInt(process.env.PORT || '3001', 10),
   database: {
@@ -10,6 +24,6 @@ export default () => ({
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: parseCorsOrigins(process.env.CORS_ORIGIN),
   },
 });

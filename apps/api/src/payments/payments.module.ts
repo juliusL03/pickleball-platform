@@ -7,6 +7,7 @@ import { PaymentsService } from './payments.service';
 import { PaymentsResolver } from './payments.resolver';
 import { WebhookController } from './webhook.controller';
 import { PaymongoGateway } from './gateways/paymongo.gateway';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PaymongoGateway } from './gateways/paymongo.gateway';
       { name: Booking.name, schema: BookingSchema },
       { name: User.name, schema: UserSchema },
     ]),
+    AuditModule,
   ],
   controllers: [WebhookController],
   providers: [PaymentsService, PaymentsResolver, PaymongoGateway],

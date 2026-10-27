@@ -4,25 +4,35 @@ A single-venue pickleball court booking and management platform built as a monor
 
 ## Architecture
 
-This is a pnpm + Turborepo monorepo with three main packages/apps:
+This is a pnpm + Turborepo monorepo with three main apps and one shared package:
 
 ```
 pickleball-platform/
 ├── apps/
-│   ├── web/      # Next.js 15 (App Router) frontend on Vercel
-│   └── api/      # NestJS + GraphQL Yoga backend on Render
+│   ├── web/          # Next.js 15 customer/public app
+│   ├── web-admin/    # Next.js 15 staff/owner administration
+│   └── api/          # NestJS + GraphQL backend
 ├── packages/
 │   └── pickleball-kit/  # Shared package (@juls/pickleball-kit)
 ```
 
 ### Apps
 
-**`apps/web` (Frontend)**
+**`apps/web` (Customer Frontend)**
 - Next.js 15 with App Router, React 19, TypeScript
 - Tailwind CSS v4, Ark UI components
 - GraphQL client via `@juls/pickleball-kit/sdk`
-- Route groups: `(public)` for public pages, `(auth)` for login/register, `(dashboard)` for customer and staff views
-- Features: Court browsing, availability/booking flow with holds, customer bookings, staff dashboard, payments (PayMongo + bank transfer)
+- Route groups: `(public)` for public pages, `(auth)` for login/register, `(dashboard)` for customer bookings
+- Features: Court browsing, availability/booking flow with holds, customer bookings, payments (PayMongo + bank transfer)
+
+**`apps/web-admin` (Administration)**
+- Next.js 15 App Router, staff/owner only
+- Separate Vercel project and domain
+- Operations: overview, bookings, schedule, change requests, payments, customers
+- Venue: courts, venue profile, content
+- Owner-only: staff/permissions, audit logs
+- Uses the same GraphQL API and `@juls/pickleball-kit` contracts
+- Planned in Phase 7; see `docs/WEB_ADMIN.md`
 
 **`apps/api` (Backend)**
 - NestJS 11 with GraphQL Yoga
@@ -51,7 +61,9 @@ pickleball-platform/
 - **Concurrency Protection**: Unique slot locks prevent double-bookings
 - **Change/Cancellation Requests**: Customers can request changes/cancellations, staff approve/reject
 - **Payments**: PayMongo integration (GCash, Maya, QRPh) + manual bank transfer with staff verification
-- **Staff Dashboard**: Manage bookings, review requests, block/unblock slots, verify payments
+- **Administration**: Dedicated `apps/web-admin` for staff/owner operations (Phase 7)
+- **Role and Permissions**: Customer, staff, and owner roles; validated staff permissions
+- **Audit Logging**: Owner-visible audit trail for critical administrative actions
 - **Content Management**: Manage venue info, courts, and site content
 
 ## Getting Started
@@ -70,6 +82,7 @@ pnpm install
 # Copy environment files
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.local.example apps/web/.env.local
+cp apps/web-admin/.env.local.example apps/web-admin/.env.local   # after Phase 7.5 scaffold
 ```
 
 ### Development
@@ -79,8 +92,9 @@ cp apps/web/.env.local.example apps/web/.env.local
 pnpm dev
 
 # Or start individually
-pnpm --filter @app/web dev      # http://localhost:3000
-pnpm --filter @app/api dev      # http://localhost:3001/graphql
+pnpm --filter @app/web dev        # http://localhost:3000
+pnpm --filter @app/web-admin dev  # http://localhost:3002 (after Phase 7.5)
+pnpm --filter @app/api dev        # http://localhost:3001/graphql
 ```
 
 ### Build
@@ -93,6 +107,7 @@ pnpm build
 pnpm --filter @juls/pickleball-kit build
 pnpm --filter @app/api build
 pnpm --filter @app/web build
+pnpm --filter @app/web-admin build   # after Phase 7.5
 ```
 
 ### Testing
@@ -111,6 +126,7 @@ pnpm typecheck
 |-------|------------|
 | Monorepo | pnpm workspaces + Turborepo |
 | Frontend | Next.js 15, React 19, Tailwind CSS v4, Ark UI |
+| Admin | Next.js 15 (`apps/web-admin`), staff/owner roles |
 | Backend | NestJS 11, GraphQL Yoga |
 | Database | MongoDB, Mongoose |
 | Validation | Zod, class-validator |
@@ -123,7 +139,7 @@ pnpm typecheck
 
 1. **Shared Package First**: `@juls/pickleball-kit` contains types, schemas, and UI components used by both frontend and backend. Only client-safe code goes in the shared package.
 
-2. **API-First Design**: All business logic lives in `apps/api`. The frontend communicates via GraphQL. Backend enforces all validations, permissions, and booking rules.
+2. **API-First Design**: All business logic lives in `apps/api`. Both frontends communicate via GraphQL. Backend enforces all validations, permissions, and booking rules.
 
 3. **Booking Flow**:
    - Customer selects court/date → views available 15-min slots
@@ -134,7 +150,9 @@ pnpm typecheck
 
 4. **Concurrency Safety**: Booking slots use a unique index `{courtId, startAt}` on `BookingSlot` collection. Even with transactions, this prevents double-bookings. Fallback for non-replica-set MongoDB included.
 
-5. **Role-Based Access**: Users have roles (customer, staff, owner). Guards enforce permissions on both GraphQL resolvers and routes.
+5. **Role-Based Access**: Users have roles (customer, staff, owner). Staff permissions are validated and enforced with `JwtAuthGuard`, `RolesGuard`, and `PermissionsGuard`. Owner-only operations cover refunds, staff management, and audit logs.
+
+6. **Separation of Surfaces**: `apps/web` serves public/customer flows. `apps/web-admin` serves staff/owner operations only. The admin UI is never the security boundary; the API is.
 
 ## Scripts
 

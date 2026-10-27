@@ -36,6 +36,9 @@ export class AuthResolver {
       phone: u.phone,
       role: u.role,
       status: u.status,
+      permissions: Array.isArray((u as any).permissions)
+        ? (u as any).permissions
+        : [],
     };
   }
 }

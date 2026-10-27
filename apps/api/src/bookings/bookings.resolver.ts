@@ -23,7 +23,15 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuditService } from '../audit/audit.service';
+import {
+  AdminBookingFilterInput,
+  BookingPage,
+  UpdateBookingStatusInput,
+} from './dto/booking-admin.dto';
 
 interface AuthUser {
   id: string;
@@ -36,6 +44,7 @@ export class BookingsResolver {
     private availabilityService: AvailabilityService,
     private bookingsService: BookingsService,
     private changeRequestsService: ChangeRequestsService,
+    private auditService: AuditService,
   ) {}
 
   @Query(() => [TimeSlotType])
@@ -105,6 +114,31 @@ export class BookingsResolver {
   ) {
     const results = await this.bookingsService.getAllBookings(status, limit);
     return results.map(mapBooking);
+  }
+
+  @Query(() => BookingPage)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @Roles('owner', 'staff')
+  @RequirePermissions('bookings.read')
+  async bookingsPage(
+    @Args('filter', { nullable: true }) filter?: AdminBookingFilterInput,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 50 }) limit?: number,
+    @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 }) offset?: number,
+  ): Promise<BookingPage> {
+    const safeLimit = Math.min(limit || 50, 100);
+    const safeOffset = offset || 0;
+    const { items, total } = await this.bookingsService.getAllBookingsPaginated(
+      filter || {},
+      safeLimit,
+      safeOffset,
+    );
+    return {
+      items: items.map(mapBooking),
+      total,
+      limit: safeLimit,
+      offset: safeOffset,
+      hasMore: safeOffset + items.length < total,
+    };
   }
 
   @Mutation(() => BookingType)
@@ -182,9 +216,35 @@ export class BookingsResolver {
     return mapChangeRequest(request);
   }
 
-  @Mutation(() => BlockedSlotType)
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Mutation(() => BookingType)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles('owner', 'staff')
+  @RequirePermissions('bookings.manage')
+  async updateBookingStatus(
+    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: UpdateBookingStatusInput,
+    @CurrentUser() user: any,
+  ): Promise<BookingType> {
+    const booking = await this.bookingsService.updateBookingStatus(
+      id,
+      input.status,
+      input.reason,
+    );
+    await this.auditService.log({
+      actorId: user?.id,
+      actorRole: user?.role,
+      action: 'booking.status_changed',
+      resourceType: 'booking',
+      resourceId: id,
+      metadata: { status: input.status, reason: input.reason },
+    });
+    return mapBooking(booking);
+  }
+
+  @Mutation(() => BlockedSlotType)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+  @Roles('owner', 'staff')
+  @RequirePermissions('schedule.manage')
   async blockSlot(
     @Args('input') input: CreateBlockedSlotInput,
     @CurrentUser() user: AuthUser,
@@ -201,8 +261,9 @@ export class BookingsResolver {
   }
 
   @Mutation(() => Boolean)
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
   @Roles('owner', 'staff')
+  @RequirePermissions('schedule.manage')
   unblockSlot(@Args('id', { type: () => ID }) id: string) {
     return this.bookingsService.deleteBlockedSlot(id);
   }

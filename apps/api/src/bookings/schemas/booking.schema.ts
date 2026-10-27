@@ -60,6 +60,12 @@ export class Booking {
   confirmedAt?: Date;
 
   @Prop()
+  completedAt?: Date;
+
+  @Prop()
+  noShowAt?: Date;
+
+  @Prop()
   cancelledAt?: Date;
 
   @Prop()

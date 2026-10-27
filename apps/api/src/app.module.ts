@@ -16,6 +16,7 @@ import { ContentModule } from './content/content.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { AppResolver } from './app.resolver';
 import { PaymentsModule } from './payments/payments.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PaymentsModule } from './payments/payments.module';
     ContentModule,
     BookingsModule,
     PaymentsModule,
+    AuditModule,
   ],
   providers: [AppResolver],
 })

@@ -59,6 +59,9 @@ export class UserType {
 
   @Field()
   status!: string;
+
+  @Field(() => [String])
+  permissions!: string[];
 }
 
 @ObjectType()
