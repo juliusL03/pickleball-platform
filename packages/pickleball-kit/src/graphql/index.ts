@@ -63,7 +63,7 @@ export const AVAILABLE_SLOTS_QUERY = `
 
 export const ME_QUERY = `
   query Me {
-    me { id email firstName lastName phone role status }
+    me { id email firstName lastName phone role status permissions }
   }
 `;
 
@@ -71,7 +71,7 @@ export const LOGIN_MUTATION = `
   mutation Login($input: LoginInput!) {
     login(input: $input) {
       accessToken
-      user { id email firstName lastName phone role status }
+      user { id email firstName lastName phone role status permissions }
     }
   }
 `;
@@ -80,7 +80,7 @@ export const REGISTER_MUTATION = `
   mutation Register($input: RegisterInput!) {
     register(input: $input) {
       accessToken
-      user { id email firstName lastName phone role status }
+      user { id email firstName lastName phone role status permissions }
     }
   }
 `;
@@ -103,6 +103,34 @@ export const ALL_BOOKINGS_QUERY = `
   ${BOOKING_FIELDS}
   query Bookings($status: String, $limit: Int) {
     bookings(status: $status, limit: $limit) { ...BookingFields }
+  }
+`;
+
+export const BOOKINGS_PAGE_QUERY = `
+  ${BOOKING_FIELDS}
+  query BookingsPage(
+    $filter: AdminBookingFilterInput
+    $limit: Int
+    $offset: Int
+  ) {
+    bookingsPage(filter: $filter, limit: $limit, offset: $offset) {
+      items {
+        ...BookingFields
+      }
+      total
+      limit
+      offset
+      hasMore
+    }
+  }
+`;
+
+export const UPDATE_BOOKING_STATUS_MUTATION = `
+  ${BOOKING_FIELDS}
+  mutation UpdateBookingStatus($id: ID!, $input: UpdateBookingStatusInput!) {
+    updateBookingStatus(id: $id, input: $input) {
+      ...BookingFields
+    }
   }
 `;
 
@@ -206,6 +234,25 @@ export const PAYMENTS_QUERY = `
   }
 `;
 
+export const PAYMENTS_PAGE_QUERY = `
+  ${PAYMENT_FIELDS}
+  query PaymentsPage(
+    $filter: AdminPaymentFilterInput
+    $limit: Int
+    $offset: Int
+  ) {
+    paymentsPage(filter: $filter, limit: $limit, offset: $offset) {
+      items {
+        ...PaymentFields
+      }
+      total
+      limit
+      offset
+      hasMore
+    }
+  }
+`;
+
 export const PAYMENT_QUERY = `
   ${PAYMENT_FIELDS}
   query Payment($id: ID!) {
@@ -231,5 +278,118 @@ export const REFUND_PAYMENT_MUTATION = `
   ${PAYMENT_FIELDS}
   mutation RequestRefund($input: RefundPaymentInput!) {
     requestRefund(input: $input) { ...PaymentFields }
+  }
+`;
+
+export const STAFF_QUERY = `
+  query Staff {
+    staff {
+      id
+      email
+      firstName
+      lastName
+      phone
+      role
+      status
+      permissions
+      lastLoginAt
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const STAFF_PERMISSIONS_QUERY = `
+  query StaffPermissions {
+    staffPermissions
+  }
+`;
+
+export const CREATE_STAFF_MUTATION = `
+  mutation CreateStaff($input: CreateStaffInput!) {
+    createStaff(input: $input) {
+      id
+      email
+      firstName
+      lastName
+      phone
+      role
+      status
+      permissions
+    }
+  }
+`;
+
+export const UPDATE_STAFF_MUTATION = `
+  mutation UpdateStaff($id: ID!, $input: UpdateStaffInput!) {
+    updateStaff(id: $id, input: $input) {
+      id
+      email
+      firstName
+      lastName
+      phone
+      role
+      status
+      permissions
+    }
+  }
+`;
+
+export const CUSTOMERS_QUERY = `
+  query Customers($filter: CustomerFilterInput, $limit: Int, $offset: Int) {
+    customers(filter: $filter, limit: $limit, offset: $offset) {
+      items {
+        id
+        email
+        firstName
+        lastName
+        phone
+        status
+        lastLoginAt
+        createdAt
+      }
+      total
+      limit
+      offset
+      hasMore
+    }
+  }
+`;
+
+export const CUSTOMER_QUERY = `
+  query Customer($id: ID!) {
+    customer(id: $id) {
+      id
+      email
+      firstName
+      lastName
+      phone
+      status
+      lastLoginAt
+      createdAt
+    }
+  }
+`;
+
+export const AUDIT_LOGS_QUERY = `
+  query AuditLogs($filter: AuditLogFilterInput, $limit: Int, $offset: Int) {
+    auditLogs(filter: $filter, limit: $limit, offset: $offset) {
+      items {
+        id
+        actorId
+        actorRole
+        action
+        resourceType
+        resourceId
+        metadata
+        ipAddress
+        userAgent
+        createdAt
+      }
+      total
+      limit
+      offset
+      hasMore
+    }
   }
 `;

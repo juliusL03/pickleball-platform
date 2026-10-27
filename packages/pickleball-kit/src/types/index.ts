@@ -1,6 +1,27 @@
 export type UserRole = 'customer' | 'staff' | 'owner';
 export type UserStatus = 'active' | 'inactive' | 'suspended';
 
+export const ALLOWED_PERMISSIONS = [
+  'bookings.read',
+  'bookings.manage',
+  'schedule.manage',
+  'requests.manage',
+  'payments.read',
+  'payments.verify',
+  'payments.refund',
+  'customers.read',
+  'courts.manage',
+  'content.manage',
+  'venue.manage',
+  'messages.read',
+  'messages.reply',
+  'staff.manage',
+  'audit.read',
+  'settings.manage',
+] as const;
+
+export type Permission = (typeof ALLOWED_PERMISSIONS)[number];
+
 export interface User {
   id: string;
   email: string;
@@ -9,9 +30,56 @@ export interface User {
   phone?: string;
   role: UserRole;
   status: UserStatus;
+  permissions?: string[];
   createdAt?: string | Date;
   updatedAt?: string | Date;
+  lastLoginAt?: string | Date;
 }
+
+export interface StaffUser extends User {
+  role: 'staff' | 'owner';
+  permissions: string[];
+}
+
+export interface Customer {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  status: UserStatus;
+  lastLoginAt?: string | Date;
+  createdAt?: string | Date;
+}
+
+export interface CustomerDetail extends Customer {}
+
+export interface AuditLog {
+  id: string;
+  actorId?: string;
+  actorRole?: UserRole;
+  action: string;
+  resourceType: string;
+  resourceId?: string;
+  metadata?: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt?: string | Date;
+}
+
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+export type BookingPage = Paginated<Booking>;
+export type PaymentPage = Paginated<Payment>;
+export type CustomerPage = Paginated<Customer>;
+export type ChangeRequestPage = Paginated<ChangeRequest>;
+export type AuditLogPage = Paginated<AuditLog>;
 
 export interface Venue {
   id: string;

@@ -1,0 +1,17 @@
+@import url("../node_modules/@juls/pickleball-kit/src/design-tokens/css-variables.css");
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--pb-color-background);
+  color: var(--pb-color-foreground);
+  font-family: var(--pb-font-sans);
+}
