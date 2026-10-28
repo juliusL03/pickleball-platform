@@ -39,6 +39,8 @@ export default function LoginPage() {
       router.push("/overview");
     } catch (err: any) {
       console.error('Login error:', err);
+      console.error('Error details:', err?.errors);
+      console.error('Full error:', JSON.stringify(err));
       setError(err?.message || "Invalid email or password");
       setLoading(false);
     }
