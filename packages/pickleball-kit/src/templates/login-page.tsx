@@ -1,15 +1,19 @@
 import type { ComponentType, FormEventHandler } from 'react';
-import { Button, Input, Label } from '../ui';
+import { Button } from '../ui/button';
 import { cn } from '../utils';
 import { AuthShell } from './_auth-shell';
 import { DefaultLink, type TemplateLinkProps } from './_link';
 import {
-  alertPanel,
   displayHeading,
-  fieldClass,
   fieldLabel,
   primaryAction,
 } from './_styles';
+import {
+  FormControl,
+  FormField,
+  FormLabel,
+  FormMessage,
+} from '../ui/form';
 
 export type AuthLinkProps = TemplateLinkProps;
 
@@ -50,41 +54,37 @@ export default function LoginPage({
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-5">
-        <div>
-          <Label htmlFor="email" className={fieldLabel}>
+        <FormField>
+          <FormLabel htmlFor="email" className={fieldLabel}>
             Email
-          </Label>
-          <Input
+          </FormLabel>
+          <FormControl
             id="email"
             type="email"
             autoComplete="email"
             value={email}
             onChange={(event) => onEmailChange(event.target.value)}
-            className={fieldClass}
             required
+            className="mt-2"
           />
-        </div>
+        </FormField>
 
-        <div>
-          <Label htmlFor="password" className={fieldLabel}>
+        <FormField>
+          <FormLabel htmlFor="password" className={fieldLabel}>
             Password
-          </Label>
-          <Input
+          </FormLabel>
+          <FormControl
             id="password"
             type="password"
             autoComplete="current-password"
             value={password}
             onChange={(event) => onPasswordChange(event.target.value)}
-            className={fieldClass}
             required
+            className="mt-2"
           />
-        </div>
+        </FormField>
 
-        {error ? (
-          <p role="alert" className={alertPanel}>
-            {error}
-          </p>
-        ) : null}
+        {error ? <FormMessage variant="error">{error}</FormMessage> : null}
 
         <Button
           type="submit"

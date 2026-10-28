@@ -6,3 +6,4 @@ export * from './card';
 export * from './badge';
 export * from './stack';
 export * from './container';
+export * from './form';

@@ -16,6 +16,7 @@ export default function RegisterPageWrapper() {
     email: '',
     phone: '',
     password: '',
+    confirmPassword: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -27,11 +28,23 @@ export default function RegisterPageWrapper() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setSubmitting(true);
     setError(null);
+
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords must match');
+      return;
+    }
+
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setSubmitting(true);
     try {
+      const { confirmPassword, ...registerData } = form;
       await register({
-        ...form,
+        ...registerData,
         phone: form.phone || undefined,
       });
       router.push('/bookings');

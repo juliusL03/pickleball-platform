@@ -1,15 +1,20 @@
 import type { ChangeEventHandler, ComponentType, FormEventHandler } from 'react';
-import { Button, Input, Label } from '../ui';
+import { Button } from '../ui/button';
 import { cn } from '../utils';
 import { AuthShell } from './_auth-shell';
 import { DefaultLink, type TemplateLinkProps } from './_link';
 import {
-  alertPanel,
   displayHeading,
-  fieldClass,
   fieldLabel,
   primaryAction,
 } from './_styles';
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormLabel,
+  FormMessage,
+} from '../ui/form';
 
 export type AuthLinkProps = TemplateLinkProps;
 
@@ -19,6 +24,7 @@ export interface RegisterForm {
   email: string;
   phone: string;
   password: string;
+  confirmPassword?: string;
 }
 
 export interface RegisterPageProps {
@@ -55,86 +61,97 @@ export default function RegisterPage({
 
       <form onSubmit={onSubmit} className="mt-8 space-y-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="firstName" className={fieldLabel}>
+          <FormField>
+            <FormLabel htmlFor="firstName" className={fieldLabel}>
               First name
-            </Label>
-            <Input
+            </FormLabel>
+            <FormControl
               id="firstName"
               autoComplete="given-name"
               value={form.firstName}
               onChange={onChange('firstName')}
-              className={fieldClass}
               required
+              className="mt-2"
             />
-          </div>
-          <div>
-            <Label htmlFor="lastName" className={fieldLabel}>
+          </FormField>
+          <FormField>
+            <FormLabel htmlFor="lastName" className={fieldLabel}>
               Last name
-            </Label>
-            <Input
+            </FormLabel>
+            <FormControl
               id="lastName"
               autoComplete="family-name"
               value={form.lastName}
               onChange={onChange('lastName')}
-              className={fieldClass}
               required
+              className="mt-2"
             />
-          </div>
+          </FormField>
         </div>
 
-        <div>
-          <Label htmlFor="email" className={fieldLabel}>
+        <FormField>
+          <FormLabel htmlFor="email" className={fieldLabel}>
             Email
-          </Label>
-          <Input
+          </FormLabel>
+          <FormControl
             id="email"
             type="email"
             autoComplete="email"
             value={form.email}
             onChange={onChange('email')}
-            className={fieldClass}
             required
+            className="mt-2"
           />
-        </div>
+        </FormField>
 
-        <div>
-          <Label htmlFor="phone" className={fieldLabel}>
+        <FormField>
+          <FormLabel htmlFor="phone" className={fieldLabel}>
             Phone (optional)
-          </Label>
-          <Input
+          </FormLabel>
+          <FormControl
             id="phone"
             type="tel"
             autoComplete="tel"
             value={form.phone}
             onChange={onChange('phone')}
-            className={fieldClass}
+            className="mt-2"
           />
-        </div>
+        </FormField>
 
-        <div>
-          <Label htmlFor="password" className={fieldLabel}>
+        <FormField>
+          <FormLabel htmlFor="password" className={fieldLabel}>
             Password
-          </Label>
-          <Input
+          </FormLabel>
+          <FormControl
             id="password"
             type="password"
             autoComplete="new-password"
             value={form.password}
             onChange={onChange('password')}
-            className={fieldClass}
             required
+            className="mt-2"
           />
-          <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
-            At least 8 characters
-          </p>
-        </div>
+          <FormDescription>At least 8 characters</FormDescription>
+        </FormField>
 
-        {error ? (
-          <p role="alert" className={alertPanel}>
-            {error}
-          </p>
-        ) : null}
+        {form.confirmPassword !== undefined && (
+          <FormField>
+            <FormLabel htmlFor="confirmPassword" className={fieldLabel}>
+              Confirm password
+            </FormLabel>
+            <FormControl
+              id="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              value={form.confirmPassword}
+              onChange={onChange('confirmPassword')}
+              required
+              className="mt-2"
+            />
+          </FormField>
+        )}
+
+        {error ? <FormMessage variant="error">{error}</FormMessage> : null}
 
         <Button
           type="submit"
