@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/recipes/card";
 import { Stack } from "@/components/recipes/stack";
 
@@ -11,7 +13,7 @@ export default function Page() {
       <Card>
         <CardHeader>
           <CardTitle>Schedule</CardTitle>
-          <CardDescription>Configuration and management</CardDescription>
+          <CardDescription>Calendar view</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-[rgb(var(--color-muted))]">Coming soon</p>
