@@ -1,5 +1,5 @@
 import { Field, ID, InputType, Int, ObjectType } from '@nestjs/graphql';
-import { IsArray, IsBoolean, IsEmail, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsEmail, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 
 @ObjectType()
 export class UserAdminType {
@@ -143,6 +143,12 @@ export class CreateStaffInput {
   @IsString()
   phone?: string;
 
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  password?: string;
+
   @Field(() => [String], { nullable: true })
   @IsOptional()
   @IsArray()
@@ -171,6 +177,12 @@ export class UpdateStaffInput {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  password?: string;
 
   @Field(() => [String], { nullable: true })
   @IsOptional()

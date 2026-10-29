@@ -393,3 +393,17 @@ export const AUDIT_LOGS_QUERY = `
     }
   }
 `;
+
+export const RESET_STAFF_PASSWORD_MUTATION = `
+  mutation ResetStaffPassword($id: ID!, $input: UpdateStaffInput!) {
+    updateStaff(id: $id, input: $input) {
+      id
+      email
+      firstName
+      lastName
+      role
+      status
+      permissions
+    }
+  }
+`;

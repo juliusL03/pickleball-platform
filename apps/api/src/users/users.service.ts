@@ -99,6 +99,8 @@ export class UsersService {
       lastName: string;
       phone?: string;
       permissions?: string[];
+      password?: string;
+      passwordHash?: string;
     },
     defaultPasswordHash?: string,
   ): Promise<UserDocument> {
@@ -106,6 +108,10 @@ export class UsersService {
       ALLOWED_PERMISSIONS.includes(p),
     );
     const filtered = permissions.filter((p) => !OWNER_ONLY_PERMISSIONS.includes(p));
+    let passwordHash = defaultPasswordHash || '!';
+    if (input.passwordHash) {
+      passwordHash = input.passwordHash;
+    }
     const user = new this.userModel({
       email: input.email.toLowerCase(),
       firstName: input.firstName,
@@ -114,7 +120,7 @@ export class UsersService {
       role: 'staff',
       status: 'active',
       permissions: filtered,
-      passwordHash: defaultPasswordHash || '!',
+      passwordHash,
       emailVerified: false,
     });
     return user.save();
@@ -128,6 +134,8 @@ export class UsersService {
       phone?: string;
       status?: string;
       permissions?: string[];
+      password?: string;
+      passwordHash?: string;
     },
     actorId: string,
   ): Promise<UserDocument | null> {
@@ -136,23 +144,10 @@ export class UsersService {
       return null;
     }
     if (user.role === 'owner') {
-      // Do not allow modifying owners through staff update endpoint
       throw new Error('Cannot modify owner account');
     }
     if (user.role !== 'staff') {
       throw new Error('Can only update staff accounts');
-    }
-
-    // Prevent deactivating last owner - not applicable here, but guard against role changes
-    if (input.status && input.status !== user.status) {
-      if (input.status === 'inactive' || input.status === 'suspended') {
-        // Count active owners
-        const activeOwners = await this.userModel.countDocuments({
-          role: 'owner',
-          status: 'active',
-        });
-        // This user is not owner, so no effect; but keep invariant
-      }
     }
 
     const updates: any = {};
@@ -160,6 +155,7 @@ export class UsersService {
     if (input.lastName !== undefined) updates.lastName = input.lastName;
     if (input.phone !== undefined) updates.phone = input.phone;
     if (input.status !== undefined) updates.status = input.status;
+    if (input.passwordHash !== undefined) updates.passwordHash = input.passwordHash;
     if (input.permissions !== undefined) {
       const filtered = (input.permissions || [])
         .filter((p) => ALLOWED_PERMISSIONS.includes(p))

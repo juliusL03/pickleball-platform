@@ -51,7 +51,12 @@ export class UsersResolver {
     @Args('input') input: CreateStaffInput,
     @CurrentUser() user: any,
   ): Promise<UserAdminType> {
-    const staff = await this.usersService.createStaff(input);
+    const bcrypt = require('bcrypt');
+    let passwordHash: string | undefined;
+    if ((input as any).password) {
+      passwordHash = await bcrypt.hash((input as any).password, 10);
+    }
+    const staff = await this.usersService.createStaff({ ...(input as any), passwordHash });
     await this.auditService.log({
       actorId: user?.id,
       actorRole: user?.role,
@@ -72,7 +77,13 @@ export class UsersResolver {
     @Args('input') input: UpdateStaffInput,
     @CurrentUser() user: any,
   ): Promise<UserAdminType> {
-    const staff = await this.usersService.updateStaff(id, input, user?.id);
+    const bcrypt = require('bcrypt');
+    let payload: any = { ...(input as any) };
+    if ((input as any).password) {
+      payload.passwordHash = await bcrypt.hash((input as any).password, 10);
+      delete payload.password;
+    }
+    const staff = await this.usersService.updateStaff(id, payload, user?.id);
     if (!staff) {
       throw new Error('Staff not found');
     }
