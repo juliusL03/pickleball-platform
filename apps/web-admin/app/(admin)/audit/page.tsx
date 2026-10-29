@@ -1,12 +1,22 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/recipes/card";
+import { Stack } from "@/components/recipes/stack";
+
 export default function Page() {
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Audit</h1>
-        <p className="text-sm text-[var(--pb-color-muted-foreground)]">
-          Coming soon
-        </p>
-      </div>
-    </div>
+    <Stack gap={6}>
+      <Stack gap={1}>
+        <h1 className="text-2xl font-semibold tracking-tight text-[rgb(var(--color-chalk))]">Audit</h1>
+        <p className="text-sm text-[rgb(var(--color-muted))]">Manage audit</p>
+      </Stack>
+      <Card>
+        <CardHeader>
+          <CardTitle>Audit</CardTitle>
+          <CardDescription>Configuration and management</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-[rgb(var(--color-muted))]">Coming soon</p>
+        </CardContent>
+      </Card>
+    </Stack>
   );
 }

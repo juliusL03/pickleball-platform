@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
+import { useTheme } from "@/providers/theme-provider";
+import { Button } from "@/components/recipes/button";
 
 const navItems = [
   { href: "/overview", label: "Overview" },
@@ -24,14 +26,15 @@ const ownerItems = [
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const isOwner = user?.role === "owner";
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-60 border-r border-[var(--pb-color-border)] bg-[var(--pb-color-surface)]">
-        <div className="flex h-14 items-center border-b border-[var(--pb-color-border)] px-4">
-          <span className="text-sm font-semibold">Admin</span>
+      <aside className="w-60 border-r border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))]">
+        <div className="flex h-14 items-center border-b border-[rgb(var(--color-line))] px-4">
+          <span className="text-sm font-semibold text-[rgb(var(--color-chalk))]">Admin</span>
         </div>
         <nav className="space-y-1 p-2">
           {navItems.map((item) => {
@@ -40,10 +43,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block rounded-md px-2 py-1.5 text-sm ${
+                className={`block rounded-md px-2 py-1.5 text-sm transition-colors ${
                   active
-                    ? "bg-[var(--pb-color-primary)]/10 text-[var(--pb-color-primary)]"
-                    : "text-[var(--pb-color-muted-foreground)] hover:text-[var(--pb-color-foreground)]"
+                    ? "bg-[rgb(var(--color-primary-600))]/10 text-[rgb(var(--color-primary-400))]"
+                    : "text-[rgb(var(--color-muted))] hover:bg-[rgb(var(--color-surface-raised))] hover:text-[rgb(var(--color-chalk))]"
                 }`}
               >
                 {item.label}
@@ -52,7 +55,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           })}
           {isOwner && (
             <>
-              <div className="mt-4 px-2 text-xs uppercase tracking-wide text-[var(--pb-color-muted-foreground)]">
+              <div className="mt-4 px-2 text-xs uppercase tracking-wide text-[rgb(var(--color-muted))]">
                 Owner
               </div>
               {ownerItems.map((item) => {
@@ -61,10 +64,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`block rounded-md px-2 py-1.5 text-sm ${
+                    className={`block rounded-md px-2 py-1.5 text-sm transition-colors ${
                       active
-                        ? "bg-[var(--pb-color-primary)]/10 text-[var(--pb-color-primary)]"
-                        : "text-[var(--pb-color-muted-foreground)] hover:text-[var(--pb-color-foreground)]"
+                        ? "bg-[rgb(var(--color-primary-600))]/10 text-[rgb(var(--color-primary-400))]"
+                        : "text-[rgb(var(--color-muted))] hover:bg-[rgb(var(--color-surface-raised))] hover:text-[rgb(var(--color-chalk))]"
                     }`}
                   >
                     {item.label}
@@ -76,25 +79,26 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </nav>
       </aside>
       <div className="flex flex-1 flex-col">
-        <header className="flex h-14 items-center justify-between border-b border-[var(--pb-color-border)] px-4">
-          <div className="text-sm text-[var(--pb-color-muted-foreground)]">
+        <header className="flex h-14 items-center justify-between border-b border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))]/80 px-4 backdrop-blur">
+          <div className="text-sm text-[rgb(var(--color-muted))]">
             {user?.firstName} {user?.lastName} · {user?.role}
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <a
-              href={process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[var(--pb-color-muted-foreground)] hover:text-[var(--pb-color-foreground)]"
-            >
-              View site
-            </a>
-            <button
-              onClick={logout}
-              className="text-[var(--pb-color-muted-foreground)] hover:text-[var(--pb-color-foreground)]"
-            >
+          <div className="flex items-center gap-2 text-sm">
+            <Button variant="ghost" size="sm" onClick={toggleTheme}>
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <a
+                href={process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View site
+              </a>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={logout}>
               Logout
-            </button>
+            </Button>
           </div>
         </header>
         <main className="flex-1 p-6">{children}</main>
